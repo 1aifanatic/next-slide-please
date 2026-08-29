@@ -4,6 +4,8 @@ Turn any publicly shared Google Slides deck into a smartly timed, hands-free pre
 
 **Live app:** https://next-slide-please.aiconic-innovations.workers.dev
 
+**Public MCP server:** https://next-slide-please.aiconic-innovations.workers.dev/mcp
+
 ## What it does
 
 - Imports a public Google Slides link without Google OAuth
@@ -20,6 +22,19 @@ Turn any publicly shared Google Slides deck into a smartly timed, hands-free pre
 The Cloudflare Worker validates the Google Slides URL, constructs a fixed Google export URL, and streams the public deck as a PDF. PDF.js renders and analyzes the deck entirely in the browser. Slide timing plans are encoded in the share link, so no database, account, or tracking is required.
 
 Only decks set to **Share → General access → Anyone with the link** can be imported.
+
+## ChatGPT plugin / MCP server
+
+The same Cloudflare Worker exposes an auth-free, streamable HTTP MCP endpoint at `/mcp`. It provides:
+
+- `create_presentation_run` — validates a public Google Slides link and creates studio and auto-play run URLs with smart or manual timing.
+- `show_presentation_launcher` — renders a ChatGPT-compatible MCP Apps widget with launch and timing-studio actions.
+
+To test it in ChatGPT, enable Developer Mode in **Settings → Apps & Connectors → Advanced settings**, create an app using the MCP URL above, and try:
+
+> Create a natural-paced presentation run for this public Google Slides deck: [link]
+
+Refresh the app in ChatGPT after changing MCP tool or widget metadata. Public submission materials, test cases, and listing copy are in [`submission/README.md`](submission/README.md).
 
 ## Run locally
 
@@ -65,6 +80,7 @@ npm run deploy      # Build and deploy to Cloudflare
 - Deck files are marked `private, no-store` by the Worker.
 - The import endpoint cannot be used as an open proxy: it extracts a Slides ID and fetches only a fixed `docs.google.com` export path.
 - Share links contain the public deck URL and slide durations. Anyone with a run link can open that already-public deck.
+- Public policies: [Privacy](https://next-slide-please.aiconic-innovations.workers.dev/privacy) · [Terms](https://next-slide-please.aiconic-innovations.workers.dev/terms) · [Support](https://next-slide-please.aiconic-innovations.workers.dev/support)
 
 ## License
 

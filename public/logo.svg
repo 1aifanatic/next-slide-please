@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Next Slide Please</title>
+  <desc id="desc">A white forward arrow in an orange rounded speech shape.</desc>
+  <rect width="512" height="512" rx="120" fill="#fff8ec"/>
+  <path d="M104 92c0-31 25-56 56-56h194c31 0 56 25 56 56v208c0 31-25 56-56 56H242L132 466l14-110c-24-6-42-28-42-55V92Z" fill="#ff6a3d" stroke="#171432" stroke-width="20" stroke-linejoin="round"/>
+  <path d="M180 196h125m-48-49 50 49-50 49" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

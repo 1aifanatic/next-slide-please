@@ -1,3 +1,5 @@
+import { mcpHandler } from "./mcp";
+
 const GOOGLE_SLIDES_ID = /docs\.google\.com\/presentation\/(?:u\/\d+\/)?d\/([a-zA-Z0-9_-]+)/;
 const MAX_DECK_BYTES = 40 * 1024 * 1024;
 
@@ -12,11 +14,15 @@ function jsonError(message: string, status: number): Response {
 }
 
 export default {
-  async fetch(request): Promise<Response> {
+  async fetch(request, env, ctx): Promise<Response> {
     const url = new URL(request.url);
 
+    if (url.pathname === "/mcp" || url.pathname.startsWith("/mcp/")) {
+      return mcpHandler(request, env, ctx);
+    }
+
     if (url.pathname === "/api/health") {
-      return Response.json({ ok: true, service: "next-slide-please" });
+      return Response.json({ ok: true, service: "next-slide-please", mcp: "/mcp" });
     }
 
     if (url.pathname !== "/api/import" || request.method !== "POST") {
@@ -81,4 +87,4 @@ export default {
 
     return new Response(upstream.body, { status: 200, headers });
   },
-} satisfies ExportedHandler;
+} satisfies ExportedHandler<Env>;

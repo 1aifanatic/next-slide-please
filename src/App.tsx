@@ -39,7 +39,7 @@ type Slide = {
 };
 
 type View = "landing" | "studio" | "presenter" | "finished";
-type SharedPlan = { u: string; d?: number[]; p?: boolean };
+type SharedPlan = { u: string; d?: number[]; m?: number; p?: boolean };
 
 const EXAMPLE_URL = "https://docs.google.com/presentation/d/your-deck-id/edit";
 
@@ -98,7 +98,7 @@ function Logo({ light = false }: { light?: boolean }) {
   );
 }
 
-function App() {
+function PresentationApp() {
   const [view, setView] = useState<View>("landing");
   const [deckUrl, setDeckUrl] = useState("");
   const [deck, setDeck] = useState<PDFDocumentProxy | null>(null);
@@ -155,13 +155,16 @@ function App() {
         const title = titleSource.length > 70 ? `${titleSource.slice(0, 67)}…` : titleSource;
         const thumbnail = await renderThumbnail(pdf, pageNumber);
         const sharedSeconds = shared?.d?.[pageNumber - 1];
+        const sharedMultiplier = clamp(shared?.m ?? 1, 0.5, 2);
 
         analyzed.push({
           pageNumber,
           title,
           words,
           suggestedSeconds,
-          seconds: typeof sharedSeconds === "number" ? clamp(Math.round(sharedSeconds), 5, 600) : suggestedSeconds,
+          seconds: typeof sharedSeconds === "number"
+            ? clamp(Math.round(sharedSeconds), 5, 600)
+            : clamp(Math.round((suggestedSeconds * sharedMultiplier) / 5) * 5, 5, 600),
           thumbnail,
         });
         setLoadProgress(18 + Math.round((pageNumber / pdf.numPages) * 80));
@@ -438,10 +441,89 @@ function App() {
 
       <footer className="landing-footer">
         <span>Free, open source, and made for better stories.</span>
-        <a href="https://github.com/1aifanatic/next-slide-please" target="_blank" rel="noreferrer">View on GitHub <ExternalLink size={14} /></a>
+        <div className="footer-links">
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/support">Support</a>
+          <a href="https://github.com/1aifanatic/next-slide-please" target="_blank" rel="noreferrer">GitHub <ExternalLink size={14} /></a>
+        </div>
       </footer>
     </main>
   );
+}
+
+type LegalKind = "privacy" | "terms" | "support";
+
+function LegalPage({ kind }: { kind: LegalKind }) {
+  const content = {
+    privacy: {
+      eyebrow: "PRIVACY POLICY",
+      title: "Small footprint. Plain language.",
+      intro: "Next Slide Please is designed to work without accounts, advertising profiles, or a presentation database.",
+      sections: [
+        ["What we process", "When you provide a public Google Slides link, our Cloudflare Worker requests a PDF export from Google so your browser can render and analyze the slides. If you use the ChatGPT plugin, the public link and timing choices are also processed as MCP tool inputs by OpenAI and our Cloudflare Worker."],
+        ["What we store", "We do not persist deck files, slide contents, timing plans, or MCP tool inputs in an application database. PDF responses are marked private and no-store. Your browser stores the most recently used public deck URL locally on your device. Share links contain the public deck URL and timing choices in the URL fragment."],
+        ["Service providers", "Cloudflare hosts the app and may process standard infrastructure logs according to its services. Google provides the public deck export. OpenAI processes plugin conversations and tool calls when the plugin is used. We do not sell personal data or share it for advertising."],
+        ["Retention and controls", "Application content is handled transiently. Infrastructure logs, if generated, follow the hosting provider’s retention settings. You can clear the saved deck URL through your browser’s site-data controls and can avoid share links if you do not want timing information encoded in a URL."],
+        ["Contact", "For privacy questions or deletion requests concerning data we control, open a support issue in the public GitHub repository. We cannot delete data controlled independently by Google, OpenAI, or Cloudflare."],
+      ],
+    },
+    terms: {
+      eyebrow: "TERMS OF USE",
+      title: "Present responsibly.",
+      intro: "By using Next Slide Please, you agree to these straightforward terms.",
+      sections: [
+        ["Your decks", "Only use presentation links and content that you own or are authorized to access and present. A deck must already be shared publicly for the service to read it."],
+        ["Acceptable use", "Do not use the service to violate law, intellectual-property rights, privacy rights, platform restrictions, or third-party terms. Do not attempt to overload, disrupt, reverse engineer, or misuse the public import or MCP endpoints."],
+        ["Availability", "The service is provided free of charge and may change, pause, or stop without notice. Google Slides export behavior, ChatGPT plugin availability, and Cloudflare infrastructure are controlled by their respective providers."],
+        ["No warranty", "The software is provided as-is, without warranties. Always rehearse and keep a backup way to advance your slides. Timing estimates are suggestions, not guarantees."],
+        ["Liability", "To the maximum extent permitted by law, the maintainers are not liable for lost presentations, unavailable links, timing errors, data loss, or indirect damages arising from use of the service."],
+      ],
+    },
+    support: {
+      eyebrow: "SUPPORT",
+      title: "Let’s get you unstuck.",
+      intro: "Next Slide Please is free and open source. Support happens transparently through GitHub.",
+      sections: [
+        ["Before reporting an import problem", "Confirm the URL is a standard docs.google.com/presentation/d/... link and the deck is set to Share → General access → Anyone with the link. Published /d/e/ links are not currently supported."],
+        ["Report a bug", "Open a GitHub issue with your browser, the action you attempted, and the error message. Never include private deck links, credentials, API keys, or confidential slide content."],
+        ["Plugin help", "Use the production MCP URL ending in /mcp. After a tool or widget update, refresh the plugin in ChatGPT Developer Mode so ChatGPT scans the latest metadata."],
+      ],
+    },
+  }[kind];
+
+  return (
+    <main className="legal-page">
+      <nav className="nav-shell">
+        <a href="/" aria-label="Next Slide Please home"><Logo /></a>
+        <a className="legal-back" href="/"><ArrowLeft size={16} /> Back to app</a>
+      </nav>
+      <article className="legal-shell">
+        <p className="eyebrow purple">{content.eyebrow}</p>
+        <h1>{content.title}</h1>
+        <p className="legal-intro">{content.intro}</p>
+        <div className="legal-sections">
+          {content.sections.map(([title, body]) => (
+            <section key={title}><h2>{title}</h2><p>{body}</p></section>
+          ))}
+        </div>
+        {kind === "support" && (
+          <a className="button button-primary legal-cta" href="https://github.com/1aifanatic/next-slide-please/issues/new" target="_blank" rel="noreferrer">
+            Open a GitHub issue <ExternalLink size={16} />
+          </a>
+        )}
+        <p className="legal-updated">Effective and last updated: August 29, 2026.</p>
+      </article>
+    </main>
+  );
+}
+
+function App() {
+  const route = window.location.pathname.replace(/\/+$/, "") || "/";
+  if (route === "/privacy") return <LegalPage kind="privacy" />;
+  if (route === "/terms") return <LegalPage kind="terms" />;
+  if (route === "/support") return <LegalPage kind="support" />;
+  return <PresentationApp />;
 }
 
 function Presenter({
